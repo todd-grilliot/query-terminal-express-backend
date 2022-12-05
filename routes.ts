@@ -1,14 +1,19 @@
 import express from 'express';
+import { main, listDatabases, client } from '.';
 import { MongoClient } from 'mongodb';
 
 
 const router = express.Router();
+// const app = express();
 // wowow I don't understand this router magic but it seems really cool.
 // i used to use app.get.. which was from express().. but now i use router.get... from express.Router()... 
 
 // used to be /api/members
 // gets all members..
 router.get('/',(req, res)=>{
+    // console.log(router.locals.db);
+    listDatabases(client);
+    // main(); // oh that works... so we can pass in callbacks inside the endpoint.. but how to make sure that they are connected?? main everytime??
     res.json({data: 'data'});
 });
 

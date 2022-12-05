@@ -5,13 +5,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const express_1 = __importDefault(require("express"));
+const _1 = require(".");
 const router = express_1.default.Router();
 exports.router = router;
+// const app = express();
 // wowow I don't understand this router magic but it seems really cool.
 // i used to use app.get.. which was from express().. but now i use router.get... from express.Router()... 
 // used to be /api/members
 // gets all members..
 router.get('/', (req, res) => {
+    // console.log(router.locals.db);
+    (0, _1.listDatabases)(_1.client);
+    // main(); // oh that works... so we can pass in callbacks inside the endpoint.. but how to make sure that they are connected?? main everytime??
     res.json({ data: 'data' });
 });
 // used to be '/api/members/:id'
