@@ -20,14 +20,16 @@ const routes_1 = require("./routes");
 const mongodb_1 = require("mongodb");
 const PASS = process.env.PASS;
 const app = (0, express_1.default)();
+app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: false }));
 app.use('/api', routes_1.router);
 const uri = `mongodb+srv://tbgrilpw8:${PASS}@clusterqueryterminal.w4lvodt.mongodb.net/?retryWrites=true&w=majority`;
 exports.client = new mongodb_1.MongoClient(uri);
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield exports.client.connect();
         // await listDatabases(client);
         // const db = client.db('query_terminal');
+        yield exports.client.connect();
         app.locals.db = exports.client.db('query_terminal');
         const collection = app.locals.db.collection('queries');
         // console.log(app.locals.db);
@@ -46,6 +48,10 @@ main()
     .then(console.log)
     .catch(console.error);
 // .finally(() => client.close());
+process.on('SIGINT', () => {
+    exports.client.close();
+    console.log('disconnected Mongo');
+});
 function listDatabases(client) {
     return __awaiter(this, void 0, void 0, function* () {
         const databasesList = yield client.db().admin().listDatabases();

@@ -1,5 +1,5 @@
 import express from 'express';
-import { main, listDatabases, client } from '.';
+import { main, client, createQuery, readOne, queries, metadata } from '.';
 import { MongoClient } from 'mongodb';
 
 
@@ -10,11 +10,9 @@ const router = express.Router();
 
 // used to be /api/members
 // gets all members..
-router.get('/',(req, res)=>{
-    // console.log(router.locals.db);
-    listDatabases(client);
-    // main(); // oh that works... so we can pass in callbacks inside the endpoint.. but how to make sure that they are connected?? main everytime??
-    res.json({data: 'data'});
+router.get('/', async (req, res) => {
+    const data = await readOne(queries);
+    res.json(data);
 });
 
 // used to be '/api/members/:id'
@@ -33,16 +31,20 @@ router.get('/:id', (req, res)=>{
     // }
 });
 
-// Create Member...
 router.post('/', (req, res) => {
-    // res.send(req.body) // this was doing the sending?? i'm not sure what this was doing..
+    if(!req.body.query)
+        return res.status(400).json({msg: 'no query included in the body'});
 
-    const newMember = {
-        // id: uuid.v4(),
-        name: req.body.name,
-        email: req.body.email,
-        status: 'active'
-    }
+    if(!req.body.answer) 
+        return res.status(400).json({msg: 'no answer included in the body'});
+
+    const query = createQuery( req.body );
+    res.json(query);
+})
+
+router.put('/:id', (req, res) => {
+    console.log(`adding one veto to ${req.params.id}`);
+    res.json({msg: 'updating +1 veto'});
 })
 
 

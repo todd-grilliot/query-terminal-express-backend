@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const express_1 = __importDefault(require("express"));
-const _1 = require(".");
 const router = express_1.default.Router();
 exports.router = router;
 // const app = express();
@@ -15,7 +14,7 @@ exports.router = router;
 // gets all members..
 router.get('/', (req, res) => {
     // console.log(router.locals.db);
-    (0, _1.listDatabases)(_1.client);
+    // listDatabases(client);
     // main(); // oh that works... so we can pass in callbacks inside the endpoint.. but how to make sure that they are connected?? main everytime??
     res.json({ data: 'data' });
 });
@@ -36,10 +35,18 @@ router.get('/:id', (req, res) => {
 // Create Member...
 router.post('/', (req, res) => {
     // res.send(req.body) // this was doing the sending?? i'm not sure what this was doing..
-    const newMember = {
-        // id: uuid.v4(),
-        name: req.body.name,
-        email: req.body.email,
-        status: 'active'
-    };
+    // const newMember = {
+    //     // id: uuid.v4(),
+    //     name: req.body.name,
+    //     email: req.body.email,
+    //     status: 'active'
+    // }
+    console.log(req.body);
+    const newQuery = req.body;
+    // const newQuery = {
+    //     text: 'what is the best fruit?',
+    //     timestamp: Date.now(),
+    //     id: 123
+    // }
+    res.json(newQuery);
 });
