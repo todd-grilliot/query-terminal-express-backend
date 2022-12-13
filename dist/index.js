@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.listDatabases = exports.main = exports.client = void 0;
+exports.readOne = exports.createQuery = exports.main = exports.metadata = exports.queries = exports.client = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const express_1 = __importDefault(require("express"));
@@ -25,21 +25,13 @@ app.use(express_1.default.urlencoded({ extended: false }));
 app.use('/api', routes_1.router);
 const uri = `mongodb+srv://tbgrilpw8:${PASS}@clusterqueryterminal.w4lvodt.mongodb.net/?retryWrites=true&w=majority`;
 exports.client = new mongodb_1.MongoClient(uri);
+exports.queries = exports.client.db('query_terminal').collection('queries');
+exports.metadata = exports.client.db('query_terminal').collection('metadata');
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        // await listDatabases(client);
-        // const db = client.db('query_terminal');
+        console.log('attempting to connect to client');
         yield exports.client.connect();
-        app.locals.db = exports.client.db('query_terminal');
-        const collection = app.locals.db.collection('queries');
-        // console.log(app.locals.db);
-        // const insertResult = await collection.insertMany([{a: 1}, {b: 2}, {c: 3}]);
-        // console.log(`inserted:`, insertResult);
-        // console.log(`is connected ${await client.isConnected}`)
-        // const PORT = process.env.PORT || 5000;
-        // app.listen(PORT, ()=>{
-        //     console.log(`server started on port ${PORT}`);
-        // });
+        console.log('connected to client');
         return 'done.';
     });
 }
@@ -47,27 +39,37 @@ exports.main = main;
 main()
     .then(console.log)
     .catch(console.error);
-// .finally(() => client.close());
-process.on('SIGINT', () => {
-    exports.client.close();
-    console.log('disconnected Mongo');
-});
-function listDatabases(client) {
+function createQuery(reqQuery) {
     return __awaiter(this, void 0, void 0, function* () {
-        const databasesList = yield client.db().admin().listDatabases();
-        console.log('Databases:');
-        databasesList.databases.forEach((db) => console.log(` -${db.name}`));
+        const meta = yield exports.metadata.findOne();
+        const queryCount = meta === null || meta === void 0 ? void 0 : meta.query_count;
+        const query = Object.assign(Object.assign({}, reqQuery), { vetos: 0, "timestamp": Date.now(), index: queryCount + 1 });
+        yield exports.queries.insertOne(query);
+        yield exports.metadata.updateOne({}, { $set: { "query_count": queryCount + 1 } });
     });
 }
-exports.listDatabases = listDatabases;
-// listDatabases(client);
-// const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-// client.connect(err => {
-//   const collection = client.db("test").collection("devices");
-//   // perform actions on the collection object
-//   client.close();
-// });
+exports.createQuery = createQuery;
+function readOne(collection) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const result = yield collection.findOne();
+        console.log(result);
+        return result;
+    });
+}
+exports.readOne = readOne;
+// export async function veto( id: string){
+//     console.log(`adding veto to ${id}`);
+//     const query = await queries.findOne({"_id": id});
+//     console.log('query found', query);
+//     console.log(query);
+//     // const vetoCount = 
+// }
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`server started on port ${PORT}`);
+});
+process.on('SIGINT', () => {
+    exports.client.close();
+    console.log('disconnected Mongo');
+    process.exit(0);
 });

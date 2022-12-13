@@ -3,39 +3,30 @@ import { metadataType, queryType } from './types'
 dotenv.config();
 import express from 'express';
 import { router } from './routes';
-import { Collection, MongoClient, ServerApiVersion } from 'mongodb';
+import { Collection, MongoClient, ObjectId, ServerApiVersion } from 'mongodb';
 
 const PASS = process.env.PASS;
-let documentCount: number;
-
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use('/api', router);
 
-
-
 const uri = `mongodb+srv://tbgrilpw8:${PASS}@clusterqueryterminal.w4lvodt.mongodb.net/?retryWrites=true&w=majority`;
 export const client = new MongoClient(uri);
 export const queries = client.db('query_terminal').collection('queries');
 export const metadata = client.db('query_terminal').collection('metadata');
 export async function main() {
+    console.log('attempting to connect to client');
     await client.connect();
+    console.log('connected to client');
     return 'done.';
 }
 main()
 .then(console.log)
 .catch(console.error)
 
-    
-// export async function listDatabases(client: MongoClient){
-//     const databasesList = await client.db().admin().listDatabases();
-    
-    
-//     console.log('Databases:');
-//     databasesList.databases.forEach((db) => console.log(` -${db.name}`));
-// }
+
 
 export async function createQuery( reqQuery: queryType ){
     const meta = await metadata.findOne();
@@ -50,14 +41,14 @@ export async function readOne(collection: Collection){
     console.log(result);
     return result;
 }
-// listDatabases(client);
-    // const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-// client.connect(err => {
-    //   const collection = client.db("test").collection("devices");
-    //   // perform actions on the collection object
-    //   client.close();
-    // });
-    
+
+// export async function veto( id: string){
+//     console.log(`adding veto to ${id}`);
+//     const query = await queries.findOne({"_id": id});
+//     console.log('query found', query);
+//     console.log(query);
+//     // const vetoCount = 
+// }
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, ()=>{
@@ -65,7 +56,7 @@ app.listen(PORT, ()=>{
 });
 
 process.on('SIGINT', ()=>{
+    console.log('SIGINT closing...');
     client.close();
-    console.log('disconnected Mongo');
     process.exit(0);
 });
