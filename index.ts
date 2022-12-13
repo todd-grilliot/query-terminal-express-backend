@@ -30,25 +30,44 @@ main()
 
 export async function createQuery( reqQuery: queryType ){
     const meta = await metadata.findOne();
-    const queryCount = meta?.query_count;
-    const query = {...reqQuery, vetos: 0, "timestamp": Date.now(), index: queryCount + 1}
+    const queriesCreated = meta?.queries_created;
+    const query = {...reqQuery, vetos: 0, "timestamp": Date.now(), index: queriesCreated + 1}
     await queries.insertOne(query);
-    await metadata.updateOne({}, {$set: {"query_count": queryCount + 1}});
+    await metadata.updateOne({}, { $set: {"queries_created": queriesCreated + 1 }});
 }
 
 export async function readOne(collection: Collection){
-    const result = await collection.findOne();
-    console.log(result);
+    const meta = await metadata.findOne();
+    const queryCount = meta?.queries_created - meta?.queries_deleted;
+    const randomIndex = Math.floor(Math.random() * queryCount);
+    console.log('randomIndex', randomIndex);
+
+    // const result = await collection.findOne();
+    const result = await collection.findOne({}, {skip: randomIndex});
+
     return result;
 }
 
-// export async function veto( id: string){
-//     console.log(`adding veto to ${id}`);
-//     const query = await queries.findOne({"_id": id});
-//     console.log('query found', query);
-//     console.log(query);
-//     // const vetoCount = 
-// }
+export async function veto( id: string){
+    const query = await queries.findOne({ _id: new ObjectId(id) });
+    let vetoCount = query?.vetos;
+    
+    if(vetoCount >= 5){
+        console.log('deleting it')
+        const meta = await metadata.findOne();
+        const queriesDeleted = meta?.queries_deleted;
+        //these calls might all need validation to make sure they go through before the action is recorded..
+        await queries.deleteOne({ _id: new ObjectId(id) });
+        await metadata.updateOne({}, { $set: {"queries_deleted": queriesDeleted + 1 }});
+        vetoCount = -1;
+    }else{
+        console.log('updating')
+        await queries.updateOne({ _id: new ObjectId(id) }, { $set: {"vetos": vetoCount + 1 }});
+    }
+
+    return vetoCount;
+    //we want to know if it exists, if we found it.. then we want to know the length.. or else that it was deleted.
+}
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, ()=>{
