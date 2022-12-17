@@ -2,12 +2,14 @@ import dotenv from 'dotenv';
 import { metadataType, queryType } from './types'
 dotenv.config();
 import express from 'express';
+import cors from 'cors';
 import { router } from './routes';
 import { Collection, MongoClient, ObjectId, ServerApiVersion } from 'mongodb';
 
 const PASS = process.env.PASS;
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use('/api', router);
