@@ -11,11 +11,11 @@
   },
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "nodemon ./index.ts",
+    "devxx": "nodemon ./index.ts",
     "echo": "echo \"anything\"",
-    "dev3": "nodemon dist/index.js",
+    "dev2xx": "nodemon dist/index.js",
     "compile": "tsc && npm run start",
-    "dev2": "nodemon -e ts --exec \"npm run compile\"",
+    "dev": "nodemon -e ts --exec \"npm run compile\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

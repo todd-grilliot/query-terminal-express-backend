@@ -33,9 +33,25 @@ main()
 export async function createQuery( reqQuery: queryType ){
     const meta = await metadata.findOne();
     const queriesCreated = meta?.queries_created;
-    const query = {...reqQuery, vetos: 0, "timestamp": Date.now(), index: queriesCreated + 1}
+    const query = {
+        ...reqQuery,
+        vetos: 0,
+        creation_timestamp: Date.now(),
+        index: queriesCreated + 1,
+        answer_count: 1,
+        author: 'anon',
+    }
     await queries.insertOne(query);
     await metadata.updateOne({}, { $set: {"queries_created": queriesCreated + 1 }});
+}
+
+export async function answerQuery( id: string, answer: string ){
+    const query = await queries.findOne({ _id: new ObjectId(id) });
+
+    try { await queries.updateOne({ _id: new ObjectId(id) }, { $set: {"answer": answer }}) }
+    catch (error) { console.error(`error in answerQuery: ${error}`) }
+
+    return query;
 }
 
 export async function readOne(collection: Collection){
@@ -53,7 +69,7 @@ export async function readOne(collection: Collection){
 export async function veto( id: string){
     const query = await queries.findOne({ _id: new ObjectId(id) });
     let vetoCount = query?.vetos;
-    
+
     if(vetoCount >= 5){
         console.log('deleting it')
         const meta = await metadata.findOne();
