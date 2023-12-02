@@ -8,11 +8,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.veto = exports.readOne = exports.answerQuery = exports.createQuery = exports.main = exports.metadata = exports.queries = exports.client = void 0;
+exports.veto = exports.readOneQuery = exports.answerQuery = exports.createQuery = exports.main = exports.metadata = exports.queries = exports.client = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const express_1 = __importDefault(require("express"));
@@ -44,6 +55,8 @@ main()
 function createQuery(reqQuery) {
     return __awaiter(this, void 0, void 0, function* () {
         const meta = yield exports.metadata.findOne();
+        if (!meta)
+            return console.warn('no metaData found');
         const queriesCreated = meta === null || meta === void 0 ? void 0 : meta.queries_created;
         const query = Object.assign(Object.assign({}, reqQuery), { vetos: 0, creation_timestamp: Date.now(), index: queriesCreated + 1, answer_count: 1, author: 'anon' });
         yield exports.queries.insertOne(query);
@@ -52,10 +65,11 @@ function createQuery(reqQuery) {
 }
 exports.createQuery = createQuery;
 function answerQuery(id, answer) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         const query = yield exports.queries.findOne({ _id: new mongodb_1.ObjectId(id) });
         try {
-            yield exports.queries.updateOne({ _id: new mongodb_1.ObjectId(id) }, { $set: { "answer": answer } });
+            yield exports.queries.updateOne({ _id: new mongodb_1.ObjectId(id) }, { $set: { "answer": answer, "updates": ((_a = query === null || query === void 0 ? void 0 : query.updates) !== null && _a !== void 0 ? _a : 0) + 1 } });
         }
         catch (error) {
             console.error(`error in answerQuery: ${error}`);
@@ -64,18 +78,21 @@ function answerQuery(id, answer) {
     });
 }
 exports.answerQuery = answerQuery;
-function readOne(collection) {
+function readOneQuery(collection) {
     return __awaiter(this, void 0, void 0, function* () {
         const meta = yield exports.metadata.findOne();
+        if (!meta)
+            return console.warn('no metaData found');
         const queryCount = (meta === null || meta === void 0 ? void 0 : meta.queries_created) - (meta === null || meta === void 0 ? void 0 : meta.queries_deleted);
         const randomIndex = Math.floor(Math.random() * queryCount);
-        console.log('randomIndex', randomIndex);
-        // const result = await collection.findOne();
-        const result = yield collection.findOne({}, { skip: randomIndex });
+        const res = yield collection.findOne({}, { skip: randomIndex });
+        if (!res)
+            return console.warn('no query found: ', res);
+        const { answer } = res, result = __rest(res, ["answer"]);
         return result;
     });
 }
-exports.readOne = readOne;
+exports.readOneQuery = readOneQuery;
 function veto(id) {
     return __awaiter(this, void 0, void 0, function* () {
         const query = yield exports.queries.findOne({ _id: new mongodb_1.ObjectId(id) });

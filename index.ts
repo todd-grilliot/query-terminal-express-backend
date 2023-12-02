@@ -31,7 +31,8 @@ main()
 
 
 export async function createQuery( reqQuery: queryType ){
-    const meta = await metadata.findOne();
+    const meta = await metadata.findOne<metadataType>();
+    if(!meta) return console.warn('no metaData found');
     const queriesCreated = meta?.queries_created;
     const query = {
         ...reqQuery,
@@ -46,22 +47,23 @@ export async function createQuery( reqQuery: queryType ){
 }
 
 export async function answerQuery( id: string, answer: string ){
-    const query = await queries.findOne({ _id: new ObjectId(id) });
+    const query = await queries.findOne<queryType>({ _id: new ObjectId(id) });
 
-    try { await queries.updateOne({ _id: new ObjectId(id) }, { $set: {"answer": answer }}) }
+    try { await queries.updateOne({ _id: new ObjectId(id) }, { $set: {"answer": answer, "updates": (query?.updates ?? 0) + 1 }}) }
     catch (error) { console.error(`error in answerQuery: ${error}`) }
 
     return query;
 }
 
-export async function readOne(collection: Collection){
-    const meta = await metadata.findOne();
+export async function readOneQuery(collection: Collection){
+    const meta = await metadata.findOne<metadataType>();
+    if(!meta) return console.warn('no metaData found');
     const queryCount = meta?.queries_created - meta?.queries_deleted;
     const randomIndex = Math.floor(Math.random() * queryCount);
-    console.log('randomIndex', randomIndex);
 
-    // const result = await collection.findOne();
-    const result = await collection.findOne({}, {skip: randomIndex});
+    const res = await collection.findOne<queryType>({}, {skip: randomIndex});
+    if(!res) return console.warn('no query found: ', res);
+    const {answer, ...result} = res;
 
     return result;
 }

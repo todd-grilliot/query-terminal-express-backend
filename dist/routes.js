@@ -20,7 +20,9 @@ exports.router = router;
 // will we need to get by id? should users be able to delete? probs veto is enough..
 //users can answer questions.. they can create questions.. and they can veto... is that the whole of it?
 router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const data = yield (0, _1.readOne)(_1.queries);
+    const data = yield (0, _1.readOneQuery)(_1.queries);
+    if (!data)
+        res.status(400).json({ msg: 'query failed' });
     res.json(data);
 }));
 router.put('/answer/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {

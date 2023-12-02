@@ -1,5 +1,5 @@
 import express from 'express';
-import { main, client, createQuery, readOne, queries, metadata, veto, answerQuery } from '.';
+import { main, client, createQuery, readOneQuery, queries, metadata, veto, answerQuery } from '.';
 import { queryType } from './types';
 import { MongoClient } from 'mongodb';
 
@@ -10,7 +10,8 @@ const router = express.Router();
 //users can answer questions.. they can create questions.. and they can veto... is that the whole of it?
 
 router.get('/', async (req, res) => {
-    const data = await readOne(queries);
+    const data = await readOneQuery(queries);
+    if(!data) res.status(400).json({msg: 'query failed'});
     res.json(data);
 });
 
@@ -25,7 +26,7 @@ router.put('/answer/:id', async (req, res) => {
     return res.status(400).json({...orgQuery, msg: 'original query is missing answer field'});
     
     return res.json(orgQuery);
-})
+});
 
 
 router.post('/create', (req, res) => {
